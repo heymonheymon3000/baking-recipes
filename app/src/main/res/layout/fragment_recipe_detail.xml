@@ -1,0 +1,22 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginStart="@dimen/fragment_layout_details_margin_right"
+    android:layout_marginEnd="@dimen/fragment_layout_details_margin_left"
+    android:background="@color/secondaryLightColor">
+
+    <ExpandableListView
+        android:id="@+id/expandableListView"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:indicatorLeft="?android:attr/expandableListPreferredItemIndicatorLeft"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
+
+    <moe.feng.common.stepperview.VerticalStepperView
+        android:id="@+id/stepper_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</LinearLayout>

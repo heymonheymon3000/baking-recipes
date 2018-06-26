@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:tag="tablet-land">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/back_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/baseline_arrow_back_white_24dp"
+            app:fabSize="mini"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            app:backgroundTint="@color/secondaryDarkColor" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/next_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:srcCompat="@drawable/baseline_arrow_forward_white_24dp"
+            app:fabSize="mini"
+            app:backgroundTint="@color/secondaryDarkColor" />
+
+    </LinearLayout>
+
+</LinearLayout>

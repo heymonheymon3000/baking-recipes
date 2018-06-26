@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/master_list_recipe_card_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:name="baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailFragment">
+</fragment>

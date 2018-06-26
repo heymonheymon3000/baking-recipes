@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primaryColor">#00897b</color>
+    <color name="primaryLightColor">#4ebaaa</color>
+    <color name="primaryDarkColor">#005b4f</color>
+    <color name="secondaryColor">#aed581</color>
+    <color name="secondaryLightColor">#e1ffb1</color>
+    <color name="secondaryDarkColor">#7da453</color>
+    <color name="primaryTextColor">#FFFFFF</color>
+    <color name="secondaryTextColor">#FFFFFF</color>
+
+    <color name="material_blue_500">#2196F3</color>
+    <color name="material_blue_700">#1976D2</color>
+
+    <color name="material_deep_purple_500">#673AB7</color>
+    <color name="material_deep_purple_a200">#7C4DFF</color>
+
+    <color name="material_lime_a200">#EEFF41</color>
+    <color name="pure_white">#FFFFFF</color>
+
+</resources>
