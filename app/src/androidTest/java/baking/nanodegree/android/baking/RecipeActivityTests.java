@@ -49,7 +49,7 @@ public class RecipeActivityTests {
                 withParent(withResourceName("action_bar"))))
                 .check(matches(withText(R.string.app_name)));
     }
-    
+
     @After
     public void unregisterIdlingResource() {
         if (mIdlingResource != null) {
