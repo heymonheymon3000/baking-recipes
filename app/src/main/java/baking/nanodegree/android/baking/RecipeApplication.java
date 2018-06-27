@@ -26,7 +26,7 @@ public class RecipeApplication extends Application {
     private static class SampleBumperPluginsProvider implements DumperPluginsProvider {
         private final Context mContext;
 
-        public SampleBumperPluginsProvider(Context context) {this.mContext = context; }
+        private SampleBumperPluginsProvider(Context context) {this.mContext = context; }
 
         @Override
         public Iterable<DumperPlugin> get() {

@@ -170,18 +170,18 @@ public class RecipeContentProvider extends ContentProvider {
     private void bulkInsertSteps(Recipe recipe, long recipeId) {
         final Step[] steps = new Step[recipe.getSteps().size()];
         for (int i = 0; i < recipe.getSteps().size(); i++) {
-            /**
+            /*
              *  Sets the foreign key in step to the primary key in recipe.
-             **/
+             */
             recipe.getSteps().get(i).setRecipeId(recipeId);
 
-            /**
+            /*
              * https://developer.android.com/reference/android/arch/persistence/room/PrimaryKey
              *
              * Must set id to 0 because the id may have been altered during the JSON deserialization
              * process. Setting id to 0 allows the id to be
              * assigned by the database when inserting an step.
-             **/
+             */
             recipe.getSteps().get(i).setId(0);
             steps[i] = recipe.getSteps().get(i);
         }
@@ -192,18 +192,18 @@ public class RecipeContentProvider extends ContentProvider {
     private void bulkInsertIngredients(Recipe recipe, long recipeId) {
         final Ingredient[] ingredients = new Ingredient[recipe.getIngredients().size()];
         for (int i = 0; i < recipe.getIngredients().size(); i++) {
-            /**
+            /*
              *  Sets the foreign key in ingredient to the primary key in recipe.
              **/
             recipe.getIngredients().get(i).setRecipeId(recipeId);
 
-            /**
+            /*
              * https://developer.android.com/reference/android/arch/persistence/room/PrimaryKey
              *
              * Must set id to 0 because the id may have been altered during the JSON deserialization
              * process. Setting id to 0 allows the id to be
              * assigned by the database when inserting an ingredient.
-             **/
+             */
             recipe.getIngredients().get(i).setId(0);
             ingredients[i] = recipe.getIngredients().get(i);
         }
