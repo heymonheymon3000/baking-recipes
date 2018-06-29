@@ -1,7 +1,6 @@
 package baking.nanodegree.android.baking.ui.recipeVideo;
 
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
@@ -16,6 +15,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +29,6 @@ import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -38,34 +37,37 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.Util;
 
 import java.util.List;
+import java.util.Objects;
 
 import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_ID;
 import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_NAME;
 import static baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailFragment.CURRENT_STEP_INDEX;
 
 import baking.nanodegree.android.baking.R;
-import baking.nanodegree.android.baking.persistence.db.AppDatabase;
 import baking.nanodegree.android.baking.persistence.entity.Step;
 import baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailActivity;
 import baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailFragment;
-import baking.nanodegree.android.baking.ui.recipeDetails.RetrieveByRecipeIdViewModel;
-import baking.nanodegree.android.baking.ui.recipeDetails.RetrieveByRecipeIdViewModelFactory;
 
-public class RecipeVideoFragment extends Fragment implements ExoPlayer.EventListener {
+public class RecipeVideoFragment extends Fragment
+        implements ExoPlayer.EventListener {
+
+    private String TAG = RecipeVideoFragment.class.getSimpleName();
+    public static String STEPS = "STEPS";
     private List<Step> mSteps;
     private Integer currentStepIndex;
     private String recipeName;
     private SimpleExoPlayerView simpleExoPlayerView;
     private SimpleExoPlayer simpleExoPlayer;
-    private final static String TAG = RecipeVideoFragment.class.getSimpleName();
     private MediaSessionCompat mMediaSession;
     private PlaybackStateCompat.Builder mStateBuilder;
-    private TextView stepTextView;
     private OnStepListener onStepListener;
     private long recipeId;
+    private String videoUrl;
+    private long currentVideoPosition = 0;
 
     public RecipeVideoFragment() {}
 
@@ -73,236 +75,240 @@ public class RecipeVideoFragment extends Fragment implements ExoPlayer.EventList
         void onStepClick(long recipeId, int index, String recipeName);
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Activity activity = (Activity) context;
+        try{
+            onStepListener = (OnStepListener) activity;
+        } catch(ClassCastException e) {
+            throw new ClassCastException(activity.toString()  + " must implement OnStepListener");
+        }
+    }
+
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        FragmentManager fm = getFragmentManager();
-        final RecipeDetailFragment recipeDetailFragment =
-                (RecipeDetailFragment)fm.findFragmentById(R.id.master_list_recipe_card_fragment);
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        if(savedInstanceState != null) {
-            recipeId = savedInstanceState.getLong(RECIPE_ID);
-            currentStepIndex = savedInstanceState.getInt(CURRENT_STEP_INDEX);
-            recipeName = savedInstanceState.getString(RECIPE_NAME);
-        } else {
-            recipeId = getArguments().getLong(RECIPE_ID);
+        if(getArguments() != null) {
+            recipeId = Objects.requireNonNull(getArguments()).getLong(RECIPE_ID);
             currentStepIndex = getArguments().getInt(CURRENT_STEP_INDEX);
             recipeName = getArguments().getString(RECIPE_NAME);
+            mSteps = getArguments().getParcelableArrayList(STEPS);
         }
 
-        final View view = inflater.inflate(R.layout.fragment_recipe_video, container, false);
+        final View view = inflater.inflate(R.layout.fragment_recipe_video, container,
+                false);
 
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(recipeName);
+        Objects.requireNonNull(((AppCompatActivity) Objects.requireNonNull(getActivity()))
+                .getSupportActionBar()).setTitle(recipeName);
 
         simpleExoPlayerView =  view.findViewById(R.id.playerView);
         simpleExoPlayerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
 
-        RetrieveByRecipeIdViewModelFactory factory =
-                new RetrieveByRecipeIdViewModelFactory(AppDatabase.getInstance(getContext()),recipeId);
-        final RetrieveByRecipeIdViewModel viewModel =
-                ViewModelProviders.of(this, factory).get(RetrieveByRecipeIdViewModel.class);
-        viewModel.getSteps().observe(this, new Observer<List<Step>>() {
-            @Override
-            public void onChanged(@Nullable List<Step> steps) {
-                viewModel.getSteps().removeObserver(this);
-                mSteps = steps;
-
-                if((mSteps.get(currentStepIndex).getVideoURL().equals(""))) {
-                    // Load the question mark as the background image until the user answers the question.
-                    simpleExoPlayerView.setDefaultArtwork(BitmapFactory.decodeResource
-                            (getResources(), R.drawable.baseline_videocam_off_white_48));
-                }
-
-                if (((view.getTag()!= null) && (view.getTag().equals("tablet-land") && isInLandscapeMode(getContext())))
-                        || !isInLandscapeMode(getContext())) {
-                    stepTextView =  view.findViewById(R.id.step_text_view);
-                    stepTextView.setText(mSteps.get(currentStepIndex).getDescription());
-                    if(getActivity() instanceof RecipeDetailActivity) {
-                        onStepListener = (RecipeDetailActivity)getActivity();
-                    } else {
-                        onStepListener = (RecipeVideoActivity)getActivity();
-                    }
-
-                    if((null != view.findViewById(R.id.back_video_fab)) &&
-                            (null != view.findViewById(R.id.next_video_fab))) {
-                        FloatingActionButton backImageView = view.findViewById(R.id.back_video_fab);
-                        backImageView.setEnabled(mSteps.get(currentStepIndex).getId() > 0);
-                        backImageView.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                if (mSteps.get(currentStepIndex).getId() > 0) {
-                                    if (simpleExoPlayer != null) {
-                                        releasePlayer();
-                                    }
-                                    currentStepIndex = currentStepIndex - 1;
-                                    onStepListener.onStepClick(recipeId, currentStepIndex, recipeName);
-                                    if (getActivity() instanceof RecipeDetailActivity) {
-                                        recipeDetailFragment.prevStep();
-                                    }
-                                }
-                            }
-                        });
-
-                        FloatingActionButton nextImageView = view.findViewById(R.id.next_video_fab);
-                        nextImageView.setEnabled(mSteps.get(currentStepIndex).getId() < mSteps.get(mSteps.size() - 1).getId());
-                        nextImageView.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                if (mSteps.get(currentStepIndex).getId() < mSteps.get(mSteps.size() - 1).getId()) {
-                                    if (simpleExoPlayer != null) {
-                                        releasePlayer();
-                                    }
-                                    currentStepIndex = currentStepIndex + 1;
-                                    onStepListener.onStepClick(recipeId, currentStepIndex + 1, recipeName);
-                                    if (getActivity() instanceof RecipeDetailActivity) {
-                                        recipeDetailFragment.nextStep();
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
-
-
-                initializeMediaSession();
-                initializePlayer(Uri.parse(mSteps.get(currentStepIndex).getVideoURL()));
+        if (getArguments() != null && mSteps.size()-1 >= currentStepIndex) {
+            if ((Objects.requireNonNull(mSteps)
+                    .get(currentStepIndex).getVideoURL().equals(""))) {
+                simpleExoPlayerView.setDefaultArtwork(BitmapFactory.decodeResource
+                        (getResources(), R.drawable.baseline_videocam_off_white_48));
             }
-        });
 
+            if (((view.getTag() != null) && (view.getTag().equals("tablet-land") &&
+                    isInLandscapeMode(Objects.requireNonNull(getContext()))))
+                    || !isInLandscapeMode(getContext())) {
+                TextView stepTextView = view.findViewById(R.id.step_text_view);
+                stepTextView.setText(mSteps.get(currentStepIndex).getDescription());
+
+                if ((null != view.findViewById(R.id.back_video_fab)) &&
+                        (null != view.findViewById(R.id.next_video_fab))) {
+                    FloatingActionButton backImageView =
+                            view.findViewById(R.id.back_video_fab);
+                    backImageView.setEnabled(currentStepIndex > 0);
+                    backImageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (currentStepIndex > 0) {
+                                currentStepIndex = currentStepIndex - 1;
+                                onStepListener.onStepClick(recipeId, currentStepIndex, recipeName);
+                                if (getActivity() instanceof RecipeDetailActivity) {
+                                    FragmentManager fm = getActivity().getSupportFragmentManager();
+                                    RecipeDetailFragment recipeDetailFragment =
+                                            (RecipeDetailFragment) Objects.requireNonNull(fm)
+                                                    .findFragmentById(R.id.master_list_recipe_card_fragment);
+
+
+                                    recipeDetailFragment.prevStep();
+                                }
+                            }
+                        }
+                    });
+
+                    FloatingActionButton nextImageView = view.findViewById(R.id.next_video_fab);
+                    nextImageView.setEnabled(currentStepIndex < mSteps.size() - 1);
+
+                    nextImageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if(currentStepIndex < mSteps.size() - 1) {
+                                currentStepIndex = currentStepIndex + 1;
+                                onStepListener.onStepClick(recipeId, currentStepIndex, recipeName);
+                                if (getActivity() instanceof RecipeDetailActivity) {
+
+                                    FragmentManager fm = getActivity().getSupportFragmentManager();
+                                    RecipeDetailFragment recipeDetailFragment =
+                                            (RecipeDetailFragment) Objects.requireNonNull(fm)
+                                                    .findFragmentById(R.id.master_list_recipe_card_fragment);
+
+                                    recipeDetailFragment.nextStep();
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (mSteps.get(currentStepIndex).getVideoURL() != null &&
+                    !mSteps.get(currentStepIndex).getVideoURL().equalsIgnoreCase("")) {
+                videoUrl = mSteps.get(currentStepIndex).getVideoURL();
+                initializePlayer();
+            } else {
+                simpleExoPlayerView.setVisibility(View.GONE);
+            }
+        }
 
         return view;
     }
 
     private boolean isInLandscapeMode( Context context ) {
-        return (context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+        return (context.getResources().getConfiguration().orientation ==
+                Configuration.ORIENTATION_LANDSCAPE);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(null != simpleExoPlayer) {
+            currentVideoPosition = simpleExoPlayer.getCurrentPosition();
+        } else {
+            currentVideoPosition = 0;
+        }
+
+        releasePlayer();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        initializePlayer();
+    }
+
+    private void initializePlayer() {
+        initializeMediaSession();
+        initializeVideoPlayer();
     }
 
     private void initializeMediaSession() {
+        if (mMediaSession == null) {
+            mMediaSession = new MediaSessionCompat(Objects.requireNonNull(getActivity()), "Recipe");
+            mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+            mMediaSession.setMediaButtonReceiver(null);
 
-        // Create a MediaSessionCompat.
-        mMediaSession = new MediaSessionCompat(getContext(), TAG);
+            mStateBuilder = new PlaybackStateCompat.Builder().setActions(
+                    PlaybackStateCompat.ACTION_PLAY |
+                            PlaybackStateCompat.ACTION_PAUSE |
+                            PlaybackStateCompat.ACTION_PLAY_PAUSE);
 
-        // Enable callbacks from MediaButtons and TransportControls.
-        mMediaSession.setFlags(
-                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-                        MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+            mMediaSession.setPlaybackState(mStateBuilder.build());
 
-        // Do not let MediaButtons restart the player when the app is not visible.
-        mMediaSession.setMediaButtonReceiver(null);
+            mMediaSession.setCallback(new MediaSessionCompat.Callback() {
+                @Override
+                public void onPlay() {
+                    simpleExoPlayer.setPlayWhenReady(true);
+                }
 
-        // Set an initial PlaybackState with ACTION_PLAY, so media buttons can start the player.
-        mStateBuilder = new PlaybackStateCompat.Builder()
-                .setActions(
-                        PlaybackStateCompat.ACTION_PLAY |
-                                PlaybackStateCompat.ACTION_PAUSE |
-                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                                PlaybackStateCompat.ACTION_PLAY_PAUSE);
+                @Override
+                public void onPause() {
+                    simpleExoPlayer.setPlayWhenReady(false);
+                }
 
-        mMediaSession.setPlaybackState(mStateBuilder.build());
+                @Override
+                public void onSkipToPrevious() {
+                    simpleExoPlayer.seekTo(0);
+                }
+            });
 
-        // MySessionCallback has methods that handle callbacks from a media controller.
-        mMediaSession.setCallback(new MySessionCallback());
-
-        // Start the Media Session since the activity is active.
-        mMediaSession.setActive(true);
-
+            mMediaSession.setActive(true);
+        }
     }
 
-    private void initializePlayer(Uri mediaUri){
-        if(simpleExoPlayer == null) {
+    private void initializeVideoPlayer() {
+        if (simpleExoPlayer == null && videoUrl != null) {
             TrackSelector trackSelector = new DefaultTrackSelector();
             LoadControl loadControl = new DefaultLoadControl();
-            DefaultHttpDataSourceFactory dataSourceFactory = new DefaultHttpDataSourceFactory("Baking");
-            ExtractorsFactory extractor = new DefaultExtractorsFactory();
-
-            MediaSource videoSource = new ExtractorMediaSource(mediaUri, dataSourceFactory, extractor, null, null);
-            simpleExoPlayer = ExoPlayerFactory.newSimpleInstance(getContext(), trackSelector, loadControl);
-            // Set the ExoPlayer.EventListener to this activity.
-            simpleExoPlayer.addListener(this);
+            simpleExoPlayer =
+                    ExoPlayerFactory.newSimpleInstance(getActivity(), trackSelector, loadControl);
+            simpleExoPlayer.seekTo(currentVideoPosition);
             simpleExoPlayerView.setPlayer(simpleExoPlayer);
 
-            simpleExoPlayer.prepare(videoSource);
+            simpleExoPlayer.addListener(this);
+
+            String userAgent = Util.getUserAgent(getActivity(), "Recipe");
+            MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(videoUrl),
+                    new DefaultDataSourceFactory(
+                    Objects.requireNonNull(getActivity()), userAgent),
+                    new DefaultExtractorsFactory(), null, null);
+            simpleExoPlayer.prepare(mediaSource);
             simpleExoPlayer.setPlayWhenReady(true);
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        releasePlayer();
-        mMediaSession.setActive(false);
-    }
-
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putLong(RECIPE_ID, recipeId);
-        outState.putInt(CURRENT_STEP_INDEX, currentStepIndex);
-        outState.putString(RECIPE_NAME,recipeName);
-    }
-
     private void releasePlayer() {
-        if(simpleExoPlayer != null) {
+        if (simpleExoPlayer != null) {
             simpleExoPlayer.stop();
             simpleExoPlayer.release();
             simpleExoPlayer = null;
         }
-    }
 
-    @Override
-    public void onTimelineChanged(Timeline timeline, Object manifest) {
-
-    }
-
-    @Override
-    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-    }
-
-    @Override
-    public void onLoadingChanged(boolean isLoading) {
-
+        if (mMediaSession != null) {
+            mMediaSession.setActive(false);
+        }
     }
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        if((playbackState == ExoPlayer.STATE_READY) && playWhenReady){
+        if ((playbackState == ExoPlayer.STATE_READY) && playWhenReady) {
             mStateBuilder.setState(PlaybackStateCompat.STATE_PLAYING,
                     simpleExoPlayer.getCurrentPosition(), 1f);
-        } else if((playbackState == ExoPlayer.STATE_READY)){
+        } else if (playbackState == ExoPlayer.STATE_READY) {
             mStateBuilder.setState(PlaybackStateCompat.STATE_PAUSED,
                     simpleExoPlayer.getCurrentPosition(), 1f);
         }
-        mMediaSession.setPlaybackState(mStateBuilder.build());
+
+        if (mStateBuilder != null) {
+            mMediaSession.setPlaybackState(mStateBuilder.build());
+        }
     }
 
     @Override
-    public void onPlayerError(ExoPlaybackException error) {
-
-    }
+    public void onPlayerError(ExoPlaybackException error) {}
 
     @Override
-    public void onPositionDiscontinuity() {
+    public void onPositionDiscontinuity() {}
 
-    }
+    @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {}
 
-    /**
-     * Media Session Callbacks, where all external clients control the player.
-     */
-    private class MySessionCallback extends MediaSessionCompat.Callback {
-        @Override
-        public void onPlay() {
-            simpleExoPlayer.setPlayWhenReady(true);
-        }
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
 
-        @Override
-        public void onPause() {
-            simpleExoPlayer.setPlayWhenReady(false);
-        }
-
-        @Override
-        public void onSkipToPrevious() {
-            simpleExoPlayer.seekTo(0);
-        }
-    }
+    @Override
+    public void onLoadingChanged(boolean isLoading) {}
 }

@@ -1,5 +1,6 @@
 package baking.nanodegree.android.baking.ui.recipe;
 
+import android.annotation.SuppressLint;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.List;
+import java.util.Objects;
 
 import baking.nanodegree.android.baking.R;
 
@@ -27,7 +29,7 @@ import baking.nanodegree.android.baking.utilities.SimpleIdlingResource;
 public class RecipeFragment extends Fragment {
     private RecipeAdapter mRecipeAdapter;
     private RecyclerView mRecyclerView;
-    private Context context;
+    private Context mContext;
 
     public RecipeFragment() {}
 
@@ -54,7 +56,7 @@ public class RecipeFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        this.context = context;
+        this.mContext = context;
 
     }
 
@@ -72,22 +74,23 @@ public class RecipeFragment extends Fragment {
         RecyclerViewMarginDecoration decoration =
                 new RecyclerViewMarginDecoration(RecyclerViewMarginDecoration.ORIENTATION_VERTICAL,
                         marginInPixel, column);
-        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), column, LinearLayoutManager.VERTICAL,false);
+        GridLayoutManager layoutManager = new GridLayoutManager(mContext, column, LinearLayoutManager.VERTICAL,false);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.addItemDecoration(decoration);
         mRecipeAdapter =
-                new RecipeAdapter(getContext(), cardWidthInDp, cardHeightInDp, (RecipeActivity)getActivity());
+                new RecipeAdapter(Objects.requireNonNull(mContext), cardWidthInDp, cardHeightInDp, (RecipeActivity)getActivity());
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setAdapter(mRecipeAdapter);
     }
 
     private void setupModelView() {
         RecipeViewModelFactory recipeViewModelFactory = new RecipeViewModelFactory(
-                getActivity().getApplication());
+                Objects.requireNonNull(getActivity()).getApplication());
 
         RecipeViewModel recipeViewModel = ViewModelProviders.of(this,
                 recipeViewModelFactory).get(RecipeViewModel.class);
 
+        @SuppressLint("VisibleForTests")
         final SimpleIdlingResource idlingResource = (SimpleIdlingResource)((RecipeActivity)getActivity()).getIdlingResource();
 
         if (idlingResource != null) {

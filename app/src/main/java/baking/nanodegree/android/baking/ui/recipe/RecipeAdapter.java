@@ -122,6 +122,8 @@ public class RecipeAdapter
         @Override
         public void onClick(View v) {
             int selectedPosition = getAdapterPosition();
+
+
             mRecipeCardClickListener.onRecipeCardSelected(mRecipes.get(selectedPosition));
         }
     }

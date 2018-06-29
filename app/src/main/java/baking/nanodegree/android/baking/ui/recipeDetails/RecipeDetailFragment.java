@@ -5,11 +5,13 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,9 +19,13 @@ import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.Toast;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import baking.nanodegree.android.baking.R;
 import baking.nanodegree.android.baking.persistence.db.AppDatabase;
@@ -28,6 +34,8 @@ import baking.nanodegree.android.baking.persistence.entity.Step;
 import baking.nanodegree.android.baking.ui.recipeVideo.RecipeVideoActivity;
 import baking.nanodegree.android.baking.ui.recipeVideo.RecipeVideoFragment;
 import baking.nanodegree.android.baking.ui.recipeVideo.VideoNavigatorListener;
+import baking.nanodegree.android.baking.utilities.Events;
+import baking.nanodegree.android.baking.utilities.GlobalBus;
 import moe.feng.common.stepperview.IStepperAdapter;
 import moe.feng.common.stepperview.VerticalStepperItemView;
 import moe.feng.common.stepperview.VerticalStepperView;
@@ -35,42 +43,62 @@ import moe.feng.common.stepperview.VerticalStepperView;
 import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_NAME;
 import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_ID;
 
-
 public class RecipeDetailFragment
-        extends Fragment implements IStepperAdapter, VideoNavigatorListener {
+        extends Fragment implements IStepperAdapter,
+        VideoNavigatorListener {
 
+    public final static String STEPS = "STEPS";
+    public final static String CURRENT_STEP_INDEX = "CURRENT_STEP_INDEX";
+    private final static String INGREDIENTS = "Ingredients";
     private List<String> expandableListTitle;
     private HashMap<String, List<Ingredient>> expandableListDetail;
-    private final static String INGREDIENTS = "Ingredients";
     private VerticalStepperView mVerticalStepperView;
     private List<Step> mSteps;
     private View inflateView;
-    public final static String CURRENT_STEP_INDEX = "CURRENT_STEP_INDEX";
     private ExpandListDataChangeListener expandListDataChangeListener;
-
     private String recipeName;
     private Long recipeId;
+    private String TAG = RecipeDetailFragment.class.getSimpleName();
+    private int currentStepIndex = 0;
 
     public RecipeDetailFragment() {
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        GlobalBus.getBus().unregister(this);
+    }
+
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_recipe_detail, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        GlobalBus.getBus().register(this);
+
+        View rootView =
+                inflater.inflate(R.layout.fragment_recipe_detail, container, false);
         ExpandableListView expandableListView = rootView.findViewById(R.id.expandableListView);
 
-        Bundle recipeBundle = getActivity().getIntent().getExtras();
-        recipeId = recipeBundle.getLong(RECIPE_ID);
+        Bundle recipeBundle = Objects.requireNonNull(getActivity()).getIntent().getExtras();
+        recipeId = Objects.requireNonNull(recipeBundle).getLong(RECIPE_ID);
         recipeName = recipeBundle.getString(RECIPE_NAME);
-
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(recipeName);
+        Objects.requireNonNull(((AppCompatActivity) getActivity())
+                .getSupportActionBar()).setTitle(recipeName);
 
         expandableListDetail = new HashMap<>();
         expandableListDetail.put(INGREDIENTS, new ArrayList<Ingredient>());
         expandableListTitle = new ArrayList<>(expandableListDetail.keySet());
 
-        ExpandableListAdapter expandableListAdapter = new IngredientExpandableListAdapter(getContext(), expandableListTitle, expandableListDetail);
+        ExpandableListAdapter expandableListAdapter =
+                new IngredientExpandableListAdapter(getContext(),
+                        expandableListTitle, expandableListDetail);
         expandListDataChangeListener = (ExpandListDataChangeListener)expandableListAdapter;
 
         expandableListView.setAdapter(expandableListAdapter);
@@ -110,6 +138,7 @@ public class RecipeDetailFragment
             }
         });
 
+
         setupViewModel(recipeId);
 
         return rootView;
@@ -117,9 +146,12 @@ public class RecipeDetailFragment
 
     private void setupViewModel(long recipeId) {
         RetrieveByRecipeIdViewModelFactory factory =
-                new RetrieveByRecipeIdViewModelFactory(AppDatabase.getInstance(getContext()),recipeId);
+                new RetrieveByRecipeIdViewModelFactory(AppDatabase
+                        .getInstance(getContext()),recipeId);
+
         final RetrieveByRecipeIdViewModel viewModel =
-                ViewModelProviders.of(this, factory).get(RetrieveByRecipeIdViewModel.class);
+                ViewModelProviders.of(this, factory)
+                        .get(RetrieveByRecipeIdViewModel.class);
 
         viewModel.getIngredients().observe(this, new Observer<List<Ingredient>>() {
             @Override
@@ -128,7 +160,6 @@ public class RecipeDetailFragment
                 expandableListDetail.clear();
                 expandableListDetail.put(INGREDIENTS, i);
                 expandableListTitle = new ArrayList<>(expandableListDetail.keySet());
-
                 expandListDataChangeListener.updateList(expandableListTitle, expandableListDetail);
             }
         });
@@ -168,25 +199,48 @@ public class RecipeDetailFragment
     }
 
     @Override
-    public View onCreateCustomView(final int index, final Context context, VerticalStepperItemView parent) {
-        inflateView = LayoutInflater.from(context).inflate(R.layout.vertical_stepper_item, parent, false);
+    public View onCreateCustomView(final int index, final Context context,
+                                   VerticalStepperItemView parent) {
+        inflateView = LayoutInflater.from(context)
+                .inflate(R.layout.vertical_stepper_item, parent, false);
         if(null != inflateView.findViewById(R.id.back_fab)) {
             ImageView backImageView = inflateView.findViewById(R.id.back_fab);
             backImageView.setEnabled(index > 0);
             backImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mVerticalStepperView.prevStep();
-                    if(inflateView.getTag() != null && inflateView.getTag().equals("tablet-land")) {
+//                    mVerticalStepperView.prevStep();
+//                    mVerticalStepperView.setCurrentStep(index - 1);
+                    prevStep();
+                    Log.v(TAG, "OUTSIDE backImageView was called!!!");
 
+
+                    currentStepIndex = index - 1;
+
+                    Events.FragmentActivityMessage message =
+                            new Events.FragmentActivityMessage(currentStepIndex);
+                    GlobalBus.getBus().post(message);
+
+                    if(inflateView.getTag() != null && inflateView.getTag().equals("tablet-land")) {
                         RecipeVideoFragment recipeVideoFragment = new RecipeVideoFragment();
                         Bundle videoFragmentBundle = new Bundle();
                         videoFragmentBundle.putLong(RECIPE_ID, recipeId);
+
+
                         videoFragmentBundle.putInt(CURRENT_STEP_INDEX, index - 1);
+
+
                         videoFragmentBundle.putString(RECIPE_NAME,recipeName);
+                        videoFragmentBundle.putParcelableArrayList(STEPS, (ArrayList<? extends Parcelable>) mSteps);
+
                         recipeVideoFragment.setArguments(videoFragmentBundle);
-                        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-                        fragmentManager.beginTransaction().add(R.id.video_container, recipeVideoFragment).commit();
+                        FragmentManager fragmentManager = Objects.requireNonNull(getActivity())
+                                .getSupportFragmentManager();
+                        fragmentManager.beginTransaction().replace(R.id.video_container,
+                                recipeVideoFragment).commit();
+
+                        Log.v(TAG, "backImageView was called!!!");
+
                     }
                 }
             });
@@ -198,16 +252,33 @@ public class RecipeDetailFragment
             nextImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mVerticalStepperView.nextStep();
+//                    mVerticalStepperView.nextStep();
+
+//                    mVerticalStepperView.setCurrentStep(index + 1);
+
+                    nextStep();
+                    Log.v(TAG, "OUTSIDE nextImageView was called!!!");
+                    currentStepIndex = index + 1;
+
+                    Events.FragmentActivityMessage message =
+                            new Events.FragmentActivityMessage(currentStepIndex);
+                    GlobalBus.getBus().post(message);
+
                     if(inflateView.getTag() != null && inflateView.getTag().equals("tablet-land")) {
                         RecipeVideoFragment recipeVideoFragment = new RecipeVideoFragment();
                         Bundle videoFragmentBundle = new Bundle();
                         videoFragmentBundle.putLong(RECIPE_ID, recipeId);
                         videoFragmentBundle.putInt(CURRENT_STEP_INDEX, index + 1);
                         videoFragmentBundle.putString(RECIPE_NAME,recipeName);
+                        videoFragmentBundle.putParcelableArrayList(STEPS, (ArrayList<? extends Parcelable>) mSteps);
+
                         recipeVideoFragment.setArguments(videoFragmentBundle);
-                        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-                        fragmentManager.beginTransaction().add(R.id.video_container, recipeVideoFragment).commit();
+                        FragmentManager fragmentManager = Objects.requireNonNull(getActivity())
+                                .getSupportFragmentManager();
+                        fragmentManager.beginTransaction().replace(R.id.video_container,
+                                recipeVideoFragment).commit();
+
+                        Log.v(TAG, "nextImageView was called!!!");
                     }
                 }
             });
@@ -221,6 +292,8 @@ public class RecipeDetailFragment
                     if (hasVideoUrl(mSteps.get(index).getVideoURL(),
                             mSteps.get(index).getThumbnailURL())) {
                         Bundle selectedRecipeCardStepBundle = new Bundle();
+                        selectedRecipeCardStepBundle.putParcelableArrayList(STEPS,
+                                (ArrayList<? extends Parcelable>) mSteps);
                         selectedRecipeCardStepBundle.putLong(RECIPE_ID, recipeId);
                         selectedRecipeCardStepBundle.putInt(CURRENT_STEP_INDEX, index);
                         selectedRecipeCardStepBundle.putString(RECIPE_NAME, recipeName);
@@ -241,11 +314,8 @@ public class RecipeDetailFragment
     }
 
     private boolean hasVideoUrl(String videoURL, String thumbnailURL) {
-        if ((null != videoURL) && (!videoURL.equals(""))) { return true; }
-
-        if ((null != thumbnailURL) && (!thumbnailURL.equals(""))) { return true; }
-
-        return false;
+        return (null != videoURL) && (!videoURL.equals("")) ||
+                (null != thumbnailURL) && (!thumbnailURL.equals(""));
     }
 
     @Override
@@ -263,4 +333,15 @@ public class RecipeDetailFragment
 
     @Override
     public void onHide(int index) {}
+
+    @Subscribe
+    public void onMessageEvent(Events.ActivityFragmentMessage event) {
+        mVerticalStepperView.setCurrentStep(event.getcurrentStepIndex());
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(CURRENT_STEP_INDEX, currentStepIndex);
+    }
 }
