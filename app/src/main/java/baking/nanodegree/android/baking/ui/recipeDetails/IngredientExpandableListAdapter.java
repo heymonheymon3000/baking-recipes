@@ -2,6 +2,8 @@ package baking.nanodegree.android.baking.ui.recipeDetails;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+
 import android.content.Context;
 import android.graphics.Typeface;
 import android.text.Html;
@@ -50,15 +52,18 @@ public class IngredientExpandableListAdapter
 
         TextView expandedListQuantityTextView = convertView
                 .findViewById(R.id.expandedListItemQuantity);
-        expandedListQuantityTextView.setText(Html.fromHtml(formatText("Quantity", String.valueOf(expandedListText.getQuantity()))));
+        expandedListQuantityTextView.setText(Html.fromHtml(formatText("Quantity",
+                String.valueOf(expandedListText.getQuantity()))));
 
         TextView expandedListMeasureTextView = convertView
                 .findViewById(R.id.expandedListItemMeasure);
-        expandedListMeasureTextView.setText(Html.fromHtml(formatText("Measure", expandedListText.getMeasure())));
+        expandedListMeasureTextView.setText(Html.fromHtml(formatText("Measure",
+                expandedListText.getMeasure())));
 
         TextView expandedListIngredientTextView = convertView
                 .findViewById(R.id.expandedListItemIngredient);
-        expandedListIngredientTextView.setText(Html.fromHtml(formatText("Ingredient", expandedListText.getIngredient())));
+        expandedListIngredientTextView.setText(Html.fromHtml(formatText("Ingredient",
+                expandedListText.getIngredient())));
 
         return convertView;
     }
@@ -91,7 +96,8 @@ public class IngredientExpandableListAdapter
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.context.
                     getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = layoutInflater.inflate(R.layout.list_group, null);
+            convertView = Objects.requireNonNull(layoutInflater)
+                    .inflate(R.layout.list_group, null);
         }
         TextView listTitleTextView = convertView
                 .findViewById(R.id.listTitle);
@@ -118,7 +124,6 @@ public class IngredientExpandableListAdapter
         sb.append(value);
         return sb.toString();
     }
-
 
     @Override
     public void updateList(List<String> expandableListTitle,

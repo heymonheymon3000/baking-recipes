@@ -64,9 +64,7 @@ public class RecipeViewModel extends AndroidViewModel {
             }
 
             @Override
-            public void onFailure(Throwable throwable) {
-
-            }
+            public void onFailure(Throwable throwable) {}
         });
     }
 

@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.util.Log;
 
 import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,24 +15,19 @@ import baking.nanodegree.android.baking.R;
 
 import baking.nanodegree.android.baking.persistence.entity.Step;
 import baking.nanodegree.android.baking.ui.recipeVideo.RecipeVideoFragment;
+import baking.nanodegree.android.baking.utilities.Constants;
 import baking.nanodegree.android.baking.utilities.Events;
 import baking.nanodegree.android.baking.utilities.GlobalBus;
-
-import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_ID;
-import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_NAME;
-import static baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailFragment.CURRENT_STEP_INDEX;
 
 public class RecipeDetailActivity extends AppCompatActivity implements
         RecipeVideoFragment.OnStepListener {
 
-    public final static String STEPS = "STEPS";
     private List<Step> mSteps;
     private int currentStepIndex = 0;
 
     @Override
     protected void onStart() {
         super.onStart();
-        // Register this fragment to listen to event.
         GlobalBus.getBus().register(this);
     }
 
@@ -59,10 +52,12 @@ public class RecipeDetailActivity extends AppCompatActivity implements
         if (null != findViewById(R.id.video_container)) {
             Bundle recipeBundle = getIntent().getExtras();
             if(recipeBundle != null) {
-                if(savedInstanceState != null && savedInstanceState.containsKey(CURRENT_STEP_INDEX)) {
-                    currentStepIndex = savedInstanceState.getInt(CURRENT_STEP_INDEX);
+                if(savedInstanceState != null &&
+                        savedInstanceState.containsKey(Constants.CURRENT_STEP_INDEX)) {
+                    currentStepIndex = savedInstanceState.getInt(Constants.CURRENT_STEP_INDEX);
                 } else {
-                    currentStepIndex = recipeBundle.getInt(CURRENT_STEP_INDEX, 0);
+                    currentStepIndex = recipeBundle.getInt(Constants.CURRENT_STEP_INDEX,
+                            0);
                 }
 
                 Events.ActivityFragmentMessage message =
@@ -71,11 +66,14 @@ public class RecipeDetailActivity extends AppCompatActivity implements
 
                 RecipeVideoFragment recipeVideoFragment = new RecipeVideoFragment();
                 Bundle videoFragmentBundle = new Bundle();
-                videoFragmentBundle.putLong(RECIPE_ID, recipeBundle.getLong(RECIPE_ID));
-                videoFragmentBundle.putInt(CURRENT_STEP_INDEX, currentStepIndex);
-                videoFragmentBundle.putString(RECIPE_NAME,recipeBundle.getString(RECIPE_NAME));
-                videoFragmentBundle.putParcelableArrayList(STEPS,recipeBundle.getParcelableArrayList(STEPS));
-                mSteps = recipeBundle.getParcelableArrayList(STEPS);
+                videoFragmentBundle.putLong(Constants.RECIPE_ID,
+                        recipeBundle.getLong(Constants.RECIPE_ID));
+                videoFragmentBundle.putInt(Constants.CURRENT_STEP_INDEX, currentStepIndex);
+                videoFragmentBundle.putString(Constants.RECIPE_NAME,
+                        recipeBundle.getString(Constants.RECIPE_NAME));
+                videoFragmentBundle.putParcelableArrayList(Constants.STEPS,
+                        recipeBundle.getParcelableArrayList(Constants.STEPS));
+                mSteps = recipeBundle.getParcelableArrayList(Constants.STEPS);
                 recipeVideoFragment.setArguments(videoFragmentBundle);
 
                 FragmentManager fragmentManager = getSupportFragmentManager();
@@ -95,27 +93,25 @@ public class RecipeDetailActivity extends AppCompatActivity implements
         currentStepIndex = index;
         RecipeVideoFragment recipeVideoFragment = new RecipeVideoFragment();
         Bundle videoFragmentBundle = new Bundle();
-        videoFragmentBundle.putLong(RECIPE_ID, recipeId);
-        videoFragmentBundle.putInt(CURRENT_STEP_INDEX, index);
-        videoFragmentBundle.putString(RECIPE_NAME,recipeName);
-        videoFragmentBundle.putParcelableArrayList(STEPS, (ArrayList<? extends Parcelable>) mSteps);
+        videoFragmentBundle.putLong(Constants.RECIPE_ID, recipeId);
+        videoFragmentBundle.putInt(Constants.CURRENT_STEP_INDEX, index);
+        videoFragmentBundle.putString(Constants.RECIPE_NAME,recipeName);
+        videoFragmentBundle.putParcelableArrayList(Constants.STEPS,
+                (ArrayList<? extends Parcelable>) mSteps);
         recipeVideoFragment.setArguments(videoFragmentBundle);
         FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.video_container, recipeVideoFragment).commit();
+        fragmentManager.beginTransaction().replace(R.id.video_container,
+                recipeVideoFragment).commit();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(CURRENT_STEP_INDEX, currentStepIndex);
+        outState.putInt(Constants.CURRENT_STEP_INDEX, currentStepIndex);
     }
 
     @Subscribe
     public void onMessageEvent(Events.FragmentActivityMessage event) {
         currentStepIndex = event.getcurrentStepIndex();
-
-        Log.v(TAG, "It was e");
     }
-
-    private String TAG = RecipeDetailActivity.class.getSimpleName();
 }

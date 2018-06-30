@@ -15,7 +15,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,20 +42,15 @@ import com.google.android.exoplayer2.util.Util;
 import java.util.List;
 import java.util.Objects;
 
-import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_ID;
-import static baking.nanodegree.android.baking.ui.recipe.RecipeActivity.RECIPE_NAME;
-import static baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailFragment.CURRENT_STEP_INDEX;
-
 import baking.nanodegree.android.baking.R;
 import baking.nanodegree.android.baking.persistence.entity.Step;
 import baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailActivity;
 import baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailFragment;
+import baking.nanodegree.android.baking.utilities.Constants;
 
 public class RecipeVideoFragment extends Fragment
         implements ExoPlayer.EventListener {
 
-    private String TAG = RecipeVideoFragment.class.getSimpleName();
-    public static String STEPS = "STEPS";
     private List<Step> mSteps;
     private Integer currentStepIndex;
     private String recipeName;
@@ -98,10 +92,10 @@ public class RecipeVideoFragment extends Fragment
                              @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         if(getArguments() != null) {
-            recipeId = Objects.requireNonNull(getArguments()).getLong(RECIPE_ID);
-            currentStepIndex = getArguments().getInt(CURRENT_STEP_INDEX);
-            recipeName = getArguments().getString(RECIPE_NAME);
-            mSteps = getArguments().getParcelableArrayList(STEPS);
+            recipeId = Objects.requireNonNull(getArguments()).getLong(Constants.RECIPE_ID);
+            currentStepIndex = getArguments().getInt(Constants.CURRENT_STEP_INDEX);
+            recipeName = getArguments().getString(Constants.RECIPE_NAME);
+            mSteps = getArguments().getParcelableArrayList(Constants.STEPS);
         }
 
         final View view = inflater.inflate(R.layout.fragment_recipe_video, container,
@@ -142,8 +136,6 @@ public class RecipeVideoFragment extends Fragment
                                     RecipeDetailFragment recipeDetailFragment =
                                             (RecipeDetailFragment) Objects.requireNonNull(fm)
                                                     .findFragmentById(R.id.master_list_recipe_card_fragment);
-
-
                                     recipeDetailFragment.prevStep();
                                 }
                             }
@@ -152,7 +144,6 @@ public class RecipeVideoFragment extends Fragment
 
                     FloatingActionButton nextImageView = view.findViewById(R.id.next_video_fab);
                     nextImageView.setEnabled(currentStepIndex < mSteps.size() - 1);
-
                     nextImageView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -216,18 +207,16 @@ public class RecipeVideoFragment extends Fragment
 
     private void initializeMediaSession() {
         if (mMediaSession == null) {
-            mMediaSession = new MediaSessionCompat(Objects.requireNonNull(getActivity()), "Recipe");
+            mMediaSession = new MediaSessionCompat(Objects.requireNonNull(getActivity()),
+                    "Recipe");
             mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
                     MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
             mMediaSession.setMediaButtonReceiver(null);
-
             mStateBuilder = new PlaybackStateCompat.Builder().setActions(
                     PlaybackStateCompat.ACTION_PLAY |
                             PlaybackStateCompat.ACTION_PAUSE |
                             PlaybackStateCompat.ACTION_PLAY_PAUSE);
-
             mMediaSession.setPlaybackState(mStateBuilder.build());
-
             mMediaSession.setCallback(new MediaSessionCompat.Callback() {
                 @Override
                 public void onPlay() {
@@ -257,9 +246,7 @@ public class RecipeVideoFragment extends Fragment
                     ExoPlayerFactory.newSimpleInstance(getActivity(), trackSelector, loadControl);
             simpleExoPlayer.seekTo(currentVideoPosition);
             simpleExoPlayerView.setPlayer(simpleExoPlayer);
-
             simpleExoPlayer.addListener(this);
-
             String userAgent = Util.getUserAgent(getActivity(), "Recipe");
             MediaSource mediaSource = new ExtractorMediaSource(Uri.parse(videoUrl),
                     new DefaultDataSourceFactory(

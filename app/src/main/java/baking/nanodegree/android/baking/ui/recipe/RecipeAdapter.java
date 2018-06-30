@@ -9,18 +9,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.squareup.picasso.Picasso;
-
 import java.util.List;
-
 import baking.nanodegree.android.baking.R;
 import baking.nanodegree.android.baking.persistence.entity.Recipe;
 import baking.nanodegree.android.baking.utilities.DisplayMetricUtils;
 
 public class RecipeAdapter
         extends RecyclerView.Adapter<RecipeAdapter.MasterListRecipeAdapterViewHolder> {
-    private final static String TAG = RecipeAdapter.class.getSimpleName();
+
     private List<Recipe> mRecipes;
     private Picasso picassoInstance;
     private int cardWidth;
@@ -46,7 +43,8 @@ public class RecipeAdapter
 
     @NonNull
     @Override
-    public MasterListRecipeAdapterViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+    public MasterListRecipeAdapterViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup,
+                                                                int viewType) {
         Context context = viewGroup.getContext();
         int layoutIdForListItem = R.layout.recipe_list_item;
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -58,13 +56,15 @@ public class RecipeAdapter
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final MasterListRecipeAdapterViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final MasterListRecipeAdapterViewHolder holder,
+                                 int position) {
         final Recipe recipe = mRecipes.get(position);
         setCardViewSize(holder);
         picassoInstance
                 .load(VideoRequestHandler.SCHEME_VIDEO+"://"+recipe.getImage())
                 .placeholder(R.drawable.recipes)
-                .resize(DisplayMetricUtils.convertDpToPixel(cardWidth), DisplayMetricUtils.convertDpToPixel(cardHeight))
+                .resize(DisplayMetricUtils.convertDpToPixel(cardWidth),
+                        DisplayMetricUtils.convertDpToPixel(cardHeight))
                 .centerCrop()
                 .into(holder.mRecipeCardImageView, new com.squareup.picasso.Callback() {
                     @Override
@@ -88,7 +88,6 @@ public class RecipeAdapter
         layoutParams.height = DisplayMetricUtils.convertDpToPixel(cardHeight);
         holder.cardView.setLayoutParams(layoutParams);
     }
-
 
     @Override
     public int getItemCount() {
@@ -122,8 +121,6 @@ public class RecipeAdapter
         @Override
         public void onClick(View v) {
             int selectedPosition = getAdapterPosition();
-
-
             mRecipeCardClickListener.onRecipeCardSelected(mRecipes.get(selectedPosition));
         }
     }

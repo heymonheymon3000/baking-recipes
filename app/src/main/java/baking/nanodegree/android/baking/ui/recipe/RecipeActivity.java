@@ -22,13 +22,11 @@ import baking.nanodegree.android.baking.persistence.entity.Step;
 import baking.nanodegree.android.baking.ui.recipeDetails.RecipeDetailActivity;
 import baking.nanodegree.android.baking.ui.recipeDetails.RetrieveByRecipeIdViewModel;
 import baking.nanodegree.android.baking.ui.recipeDetails.RetrieveByRecipeIdViewModelFactory;
+import baking.nanodegree.android.baking.utilities.Constants;
 import baking.nanodegree.android.baking.utilities.SimpleIdlingResource;
 
 public class RecipeActivity extends AppCompatActivity implements
         RecipeAdapter.OnRecipeCardClickListener {
-
-    public static String RECIPE_ID = "RECIPE_ID";
-    public static String RECIPE_NAME = "RECIPE_NAME";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +37,8 @@ public class RecipeActivity extends AppCompatActivity implements
     @Override
     public void onRecipeCardSelected(Recipe recipeCard) {
         final Bundle recipeBundle = new Bundle();
-        recipeBundle.putLong(RECIPE_ID, recipeCard.getId());
-        recipeBundle.putString(RECIPE_NAME, recipeCard.getName());
+        recipeBundle.putLong(Constants.RECIPE_ID, recipeCard.getId());
+        recipeBundle.putString(Constants.RECIPE_NAME, recipeCard.getName());
 
         RetrieveByRecipeIdViewModelFactory factory =
                 new RetrieveByRecipeIdViewModelFactory(AppDatabase
@@ -50,21 +48,18 @@ public class RecipeActivity extends AppCompatActivity implements
                 ViewModelProviders.of(this, factory)
                         .get(RetrieveByRecipeIdViewModel.class);
 
-
         final Context context = this;
         viewModel.getSteps().observe(this, new Observer<List<Step>>() {
             @Override
             public void onChanged(@Nullable List<Step> steps) {
                 viewModel.getSteps().removeObserver(this);
-                recipeBundle.putParcelableArrayList("STEPS", (ArrayList<? extends Parcelable>) steps);
+                recipeBundle.putParcelableArrayList(Constants.STEPS, (ArrayList<? extends Parcelable>) steps);
 
                 final Intent intent = new Intent(context, RecipeDetailActivity.class);
                 intent.putExtras(recipeBundle);
                 startActivity(intent);
             }
         });
-
-
     }
 
     @Nullable

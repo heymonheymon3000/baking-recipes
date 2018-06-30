@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.ContentUris;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -36,9 +35,7 @@ public class RecipeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         setupRecyclerView();
-
         setupModelView();
     }
 
@@ -47,9 +44,9 @@ public class RecipeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.fragment_master_list_recipe, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_master_list_recipe,
+                container, false);
         mRecyclerView = rootView.findViewById(R.id.rv_recipe_card);
-
         return rootView;
     }
 
@@ -57,7 +54,6 @@ public class RecipeFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
         this.mContext = context;
-
     }
 
     private void setupRecyclerView() {
@@ -74,11 +70,13 @@ public class RecipeFragment extends Fragment {
         RecyclerViewMarginDecoration decoration =
                 new RecyclerViewMarginDecoration(RecyclerViewMarginDecoration.ORIENTATION_VERTICAL,
                         marginInPixel, column);
-        GridLayoutManager layoutManager = new GridLayoutManager(mContext, column, LinearLayoutManager.VERTICAL,false);
+        GridLayoutManager layoutManager = new GridLayoutManager(mContext, column,
+                LinearLayoutManager.VERTICAL,false);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.addItemDecoration(decoration);
         mRecipeAdapter =
-                new RecipeAdapter(Objects.requireNonNull(mContext), cardWidthInDp, cardHeightInDp, (RecipeActivity)getActivity());
+                new RecipeAdapter(Objects.requireNonNull(mContext), cardWidthInDp,
+                        cardHeightInDp, (RecipeActivity)getActivity());
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setAdapter(mRecipeAdapter);
     }
@@ -91,7 +89,8 @@ public class RecipeFragment extends Fragment {
                 recipeViewModelFactory).get(RecipeViewModel.class);
 
         @SuppressLint("VisibleForTests")
-        final SimpleIdlingResource idlingResource = (SimpleIdlingResource)((RecipeActivity)getActivity()).getIdlingResource();
+        final SimpleIdlingResource idlingResource =
+                (SimpleIdlingResource)((RecipeActivity)getActivity()).getIdlingResource();
 
         if (idlingResource != null) {
             idlingResource.setIdleState(false);

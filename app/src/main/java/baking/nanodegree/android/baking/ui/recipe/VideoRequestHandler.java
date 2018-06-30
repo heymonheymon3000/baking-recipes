@@ -22,7 +22,7 @@ public class VideoRequestHandler extends RequestHandler {
     }
 
     @Override
-    public Result load(Request data, int arg1) throws IOException {
+    public Result load(Request data, int arg1)  {
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(Uri.parse("https:"+data.uri.getPath()).toString(),
                 new HashMap<String, String>());

@@ -9,7 +9,6 @@ import com.facebook.stetho.dumpapp.DumperPlugin;
 
 import java.util.ArrayList;
 
-
 public class RecipeApplication extends Application {
 
     public void onCreate() {
