@@ -39,7 +39,8 @@ public class RecipeViewModel extends AndroidViewModel {
         if (recipes == null) {
             localSource.getAll(new LocalObserver<ArrayList<Recipe>>() {
                 @Override
-                public void onNext(@io.reactivex.annotations.NonNull ArrayList<Recipe> cachedRecipes) {
+                public void onNext(@io.reactivex.annotations.NonNull ArrayList<Recipe>
+                                           cachedRecipes) {
                     if (cachedRecipes == null || cachedRecipes.size() != 4) {
                         getRecipeFromRemote();
                     }

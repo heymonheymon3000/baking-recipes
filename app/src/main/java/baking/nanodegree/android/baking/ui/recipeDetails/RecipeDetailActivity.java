@@ -5,7 +5,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 
 import org.greenrobot.eventbus.Subscribe;
 import java.util.ArrayList;
@@ -60,6 +59,7 @@ public class RecipeDetailActivity extends AppCompatActivity implements
                             0);
                 }
 
+                // notify fragment that current step index has changed.
                 Events.ActivityFragmentMessage message =
                         new Events.ActivityFragmentMessage(currentStepIndex);
                 GlobalBus.getBus().post(message);
@@ -77,7 +77,8 @@ public class RecipeDetailActivity extends AppCompatActivity implements
                 recipeVideoFragment.setArguments(videoFragmentBundle);
 
                 FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction().add(R.id.video_container, recipeVideoFragment).commit();
+                fragmentManager.beginTransaction().add(R.id.video_container,
+                        recipeVideoFragment).commit();
             }
         }
     }
@@ -90,7 +91,9 @@ public class RecipeDetailActivity extends AppCompatActivity implements
 
     @Override
     public void onStepClick(long recipeId, int index, String recipeName) {
+        // store current step index for screen rotation.
         currentStepIndex = index;
+
         RecipeVideoFragment recipeVideoFragment = new RecipeVideoFragment();
         Bundle videoFragmentBundle = new Bundle();
         videoFragmentBundle.putLong(Constants.RECIPE_ID, recipeId);
@@ -112,6 +115,7 @@ public class RecipeDetailActivity extends AppCompatActivity implements
 
     @Subscribe
     public void onMessageEvent(Events.FragmentActivityMessage event) {
+        // handle current step index changed from fragment.
         currentStepIndex = event.getcurrentStepIndex();
     }
 }

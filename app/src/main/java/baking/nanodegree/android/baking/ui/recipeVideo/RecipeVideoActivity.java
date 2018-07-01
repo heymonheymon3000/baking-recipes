@@ -25,7 +25,7 @@ public class RecipeVideoActivity extends AppCompatActivity implements
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if ((recipeVideoFragment != null) && recipeVideoFragment.isAdded()) {
-            getSupportFragmentManager().putFragment(outState, "recipeVideoFragment",
+            getSupportFragmentManager().putFragment(outState, Constants.RECIPE_VIDEO_FRAGMENT,
                     recipeVideoFragment);
         }
         if(mSteps !=null) {
@@ -69,7 +69,7 @@ public class RecipeVideoActivity extends AppCompatActivity implements
         if (savedInstanceState != null) {
             recipeVideoFragment = (RecipeVideoFragment)
                     getSupportFragmentManager().getFragment(savedInstanceState,
-                            "recipeVideoFragment");
+                            Constants.RECIPE_VIDEO_FRAGMENT);
         } else {
             recipeVideoFragment = new RecipeVideoFragment();
             Bundle videoFragmentBundle = new Bundle();

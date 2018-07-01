@@ -53,7 +53,8 @@ public class RecipeActivity extends AppCompatActivity implements
             @Override
             public void onChanged(@Nullable List<Step> steps) {
                 viewModel.getSteps().removeObserver(this);
-                recipeBundle.putParcelableArrayList(Constants.STEPS, (ArrayList<? extends Parcelable>) steps);
+                recipeBundle.putParcelableArrayList(Constants.STEPS,
+                        (ArrayList<? extends Parcelable>) steps);
 
                 final Intent intent = new Intent(context, RecipeDetailActivity.class);
                 intent.putExtras(recipeBundle);

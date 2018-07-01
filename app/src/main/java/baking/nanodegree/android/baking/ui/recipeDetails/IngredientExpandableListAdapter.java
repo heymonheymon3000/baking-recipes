@@ -15,9 +15,12 @@ import android.widget.TextView;
 
 import baking.nanodegree.android.baking.R;
 import baking.nanodegree.android.baking.persistence.entity.Ingredient;
+import baking.nanodegree.android.baking.utilities.Constants;
 
 public class IngredientExpandableListAdapter
         extends BaseExpandableListAdapter implements ExpandListDataChangeListener {
+
+
     private Context context;
     private List<String> expandableListTitle;
     private HashMap<String, List<Ingredient>> expandableListDetail;
@@ -43,7 +46,8 @@ public class IngredientExpandableListAdapter
     @Override
     public View getChildView(int listPosition, final int expandedListPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
-        final Ingredient expandedListText = (Ingredient) getChild(listPosition, expandedListPosition);
+        final Ingredient expandedListText = (Ingredient) getChild(listPosition,
+                expandedListPosition);
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -52,17 +56,17 @@ public class IngredientExpandableListAdapter
 
         TextView expandedListQuantityTextView = convertView
                 .findViewById(R.id.expandedListItemQuantity);
-        expandedListQuantityTextView.setText(Html.fromHtml(formatText("Quantity",
+        expandedListQuantityTextView.setText(Html.fromHtml(formatText(Constants.QUANTITY,
                 String.valueOf(expandedListText.getQuantity()))));
 
         TextView expandedListMeasureTextView = convertView
                 .findViewById(R.id.expandedListItemMeasure);
-        expandedListMeasureTextView.setText(Html.fromHtml(formatText("Measure",
+        expandedListMeasureTextView.setText(Html.fromHtml(formatText(Constants.MEASURE,
                 expandedListText.getMeasure())));
 
         TextView expandedListIngredientTextView = convertView
                 .findViewById(R.id.expandedListItemIngredient);
-        expandedListIngredientTextView.setText(Html.fromHtml(formatText("Ingredient",
+        expandedListIngredientTextView.setText(Html.fromHtml(formatText(Constants.INGREDIENT,
                 expandedListText.getIngredient())));
 
         return convertView;

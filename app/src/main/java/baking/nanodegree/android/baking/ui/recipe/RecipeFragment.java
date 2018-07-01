@@ -92,7 +92,7 @@ public class RecipeFragment extends Fragment {
         final SimpleIdlingResource idlingResource =
                 (SimpleIdlingResource)((RecipeActivity)getActivity()).getIdlingResource();
 
-        if (idlingResource != null) {
+        if (null != idlingResource) {
             idlingResource.setIdleState(false);
         }
 
@@ -103,7 +103,7 @@ public class RecipeFragment extends Fragment {
             public void onChanged(@Nullable List<Recipe> recipes) {
                 mRecipeAdapter.setRecipes(recipes);
 
-                if (idlingResource != null) {
+                if (null != idlingResource) {
                     idlingResource.setIdleState(true);
                 }
             }

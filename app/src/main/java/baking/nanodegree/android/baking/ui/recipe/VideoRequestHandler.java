@@ -9,7 +9,6 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Request;
 import com.squareup.picasso.RequestHandler;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 public class VideoRequestHandler extends RequestHandler {

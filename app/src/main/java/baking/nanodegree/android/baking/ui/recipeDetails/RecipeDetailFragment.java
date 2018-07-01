@@ -11,7 +11,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,7 +52,6 @@ public class RecipeDetailFragment
     private ExpandListDataChangeListener expandListDataChangeListener;
     private String recipeName;
     private Long recipeId;
-    private String TAG = RecipeDetailFragment.class.getSimpleName();
     private int currentStepIndex = 0;
 
     public RecipeDetailFragment() {
@@ -97,42 +95,6 @@ public class RecipeDetailFragment
         expandListDataChangeListener = (ExpandListDataChangeListener)expandableListAdapter;
 
         expandableListView.setAdapter(expandableListAdapter);
-
-        expandableListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
-            @Override
-            public void onGroupExpand(int groupPosition) {
-                Toast.makeText(getContext(),
-                        expandableListTitle.get(groupPosition) + " List Expanded.",
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        expandableListView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
-            @Override
-            public void onGroupCollapse(int groupPosition) {
-                Toast.makeText(getContext(),
-                        expandableListTitle.get(groupPosition) + " List Collapsed.",
-                        Toast.LENGTH_SHORT).show();
-
-            }
-        });
-
-        expandableListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
-            @Override
-            public boolean onChildClick(ExpandableListView parent, View v,
-                                        int groupPosition, int childPosition, long id) {
-                Toast.makeText(
-                        getContext(),
-                        expandableListTitle.get(groupPosition)
-                                + " -> "
-                                + expandableListDetail.get(
-                                expandableListTitle.get(groupPosition)).get(
-                                childPosition), Toast.LENGTH_SHORT
-                ).show();
-                return false;
-            }
-        });
-
 
         setupViewModel(recipeId);
 
@@ -210,7 +172,8 @@ public class RecipeDetailFragment
                             new Events.FragmentActivityMessage(currentStepIndex);
                     GlobalBus.getBus().post(message);
 
-                    if(inflateView.getTag() != null && inflateView.getTag().equals("tablet-land")) {
+                    if(inflateView.getTag() != null &&
+                            inflateView.getTag().equals(Constants.TABLET_LAND)) {
                         RecipeVideoFragment recipeVideoFragment = new RecipeVideoFragment();
                         Bundle videoFragmentBundle = new Bundle();
                         videoFragmentBundle.putLong(Constants.RECIPE_ID, recipeId);
@@ -240,7 +203,8 @@ public class RecipeDetailFragment
                             new Events.FragmentActivityMessage(currentStepIndex);
                     GlobalBus.getBus().post(message);
 
-                    if(inflateView.getTag() != null && inflateView.getTag().equals("tablet-land")) {
+                    if(inflateView.getTag() != null &&
+                            inflateView.getTag().equals(Constants.TABLET_LAND)) {
                         RecipeVideoFragment recipeVideoFragment = new RecipeVideoFragment();
                         Bundle videoFragmentBundle = new Bundle();
                         videoFragmentBundle.putLong(Constants.RECIPE_ID, recipeId);

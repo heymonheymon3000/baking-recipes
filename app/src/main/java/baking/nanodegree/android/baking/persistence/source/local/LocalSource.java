@@ -7,7 +7,6 @@ import android.net.Uri;
 import java.util.ArrayList;
 import java.util.List;
 
-import baking.nanodegree.android.baking.persistence.db.AppDatabase;
 import baking.nanodegree.android.baking.persistence.entity.Ingredient;
 import baking.nanodegree.android.baking.persistence.entity.Recipe;
 import baking.nanodegree.android.baking.persistence.entity.Step;
